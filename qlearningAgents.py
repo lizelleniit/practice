@@ -90,16 +90,12 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        #util.raiseNotDefined()
+        
         legalActions=self.getLegalActions(state)
         if not legalActions:
             # this means there are no legal actions
             return None
         else:
-            #if state in self.Q:
-            #    pass
-            #else:
-            #    self.Q[state]=np.zeros(len(actions))
             Qfors=np.zeros(len(legalActions))
             for ai,a in enumerate(legalActions):
                 

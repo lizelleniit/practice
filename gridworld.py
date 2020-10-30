@@ -132,12 +132,34 @@ class Gridworld(mdp.MarkovDecisionProcess):
             return [(termState, 1.0)]
 
         successors = []
-
+        
         northState = (self.__isAllowed(y+1,x) and (x,y+1)) or state
         westState = (self.__isAllowed(y,x-1) and (x-1,y)) or state
         southState = (self.__isAllowed(y-1,x) and (x,y-1)) or state
         eastState = (self.__isAllowed(y,x+1) and (x+1,y)) or state
+        
+            # now we make another move upwards
+        
+        '''if x==3 or x==4 or x==7:
+                northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
+                westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
+                southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
+                eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
+        '''
+            # now if we're in x==6, 7 or 8, we wanna go one even higher if we can
+        '''elif x==5 or x==6:
+                # first just move one higher
+                northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
+                westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
+                southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
+                eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
+                # now we try move another block up
+                northState = (self.__isAllowed(y+1+2,x) and (x,y+1+2)) or northState
+                westState = (self.__isAllowed(y+2,x-1) and (x-1,y+2)) or westState
+                southState = (self.__isAllowed(y+2-1,x) and (x,y-1+2)) or southState
+                eastState = (self.__isAllowed(y+2,x+1) and (x+1,y+2)) or eastState
 
+        '''
         if action == 'north' or action == 'south':
             if action == 'north':
                 successors.append((northState,1-self.noise))
@@ -315,10 +337,17 @@ def getWindyGrid():
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-            [' ','S',' ',' ',' ',' ',-1.,' ',' ',' '],
+            [' ','S',' ',' ',' ',' ',+1.,' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
+    return Gridworld(grid)
+rs2=1
+rs3=2
+def getDawGrid():
+    grid = [[ 'S',rs3],
+            [ rs2,'#']
+            ]
     return Gridworld(grid)
 
 
@@ -391,17 +420,17 @@ def runEpisode(agent, environment, discount, decision, display, message, pause, 
 def parseOptions():
     optParser = optparse.OptionParser()
     optParser.add_option('-d', '--discount',action='store',
-                         type='float',dest='discount',default=1.,
+                         type='float',dest='discount',default=0.9,
                          help='Discount on future (default %default)')
     optParser.add_option('-r', '--livingReward',action='store',
-                         type='float',dest='livingReward',default=-1.,
+                         type='float',dest='livingReward',default=0.,
                          metavar="R", help='Reward for living for a time step (default %default)')
     optParser.add_option('-n', '--noise',action='store',
                          type='float',dest='noise',default=0.,
                          metavar="P", help='How often action results in ' +
                          'unintended direction (default %default)' )
     optParser.add_option('-e', '--epsilon',action='store',
-                         type='float',dest='epsilon',default=0.,
+                         type='float',dest='epsilon',default=0.1,
                          metavar="E", help='Chance of taking a random action in q-learning (default %default)')
     optParser.add_option('-l', '--learningRate',action='store',
                          type='float',dest='learningRate',default=0.5,
@@ -410,11 +439,11 @@ def parseOptions():
                          type='int',dest='iters',default=10,
                          metavar="K", help='Number of rounds of value iteration (default %default)')
     optParser.add_option('-k', '--episodes',action='store',
-                         type='int',dest='episodes',default=50,
+                         type='int',dest='episodes',default=100,
                          metavar="K", help='Number of epsiodes of the MDP to run (default %default)')
     
     optParser.add_option('-g', '--grid',action='store',
-                         metavar="G", type='string',dest='grid',default="WindyGrid",
+                         metavar="G", type='string',dest='grid',default="BridgeGrid",
                          help='Grid to use (case sensitive; options are BookGrid, BridgeGrid, CliffGrid, MazeGrid, default %default)' )
     optParser.add_option('-w', '--windowSize', metavar="X", type='int',dest='gridSize',default=100,
                          help='Request a window width of X pixels *per grid cell* (default %default)')
