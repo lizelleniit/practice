@@ -98,7 +98,7 @@ class ReinforcementAgent(ValueEstimationAgent):
     #    Override These Functions      #
     ####################################
 
-    def update(self, state, action, nextState, reward):
+    def update(self, state, action, nextState, nextAction, reward):
         """
                 This class will call this function, which you write, after
                 observing a transition and reward
@@ -117,7 +117,7 @@ class ReinforcementAgent(ValueEstimationAgent):
         """
         return self.actionFn(state)
 
-    def observeTransition(self, state,action,nextState,deltaReward):
+    def observeTransition(self, state,action,nextState,nextAction,deltaReward):
         """
             Called by environment to inform agent that a transition has
             been observed. This will result in a call to self.update
@@ -126,7 +126,7 @@ class ReinforcementAgent(ValueEstimationAgent):
             NOTE: Do *not* override or call this function
         """
         self.episodeRewards += deltaReward
-        self.update(state,action,nextState,deltaReward)
+        self.update(state,action,nextState,nextAction,deltaReward)
 
     def startEpisode(self):
         """

@@ -60,7 +60,7 @@ EDGE_COLOR = formatColor(1,1,1)
 OBSTACLE_COLOR = formatColor(0.5,0.5,0.5)
 TEXT_COLOR = formatColor(1,1,1)
 MUTED_TEXT_COLOR = formatColor(0.7,0.7,0.7)
-LOCATION_COLOR = formatColor(0,0,1)
+LOCATION_COLOR = formatColor(1,0,0)
 
 WINDOW_SIZE = -1
 GRID_SIZE = -1
@@ -317,12 +317,48 @@ def drawSquareQ(x, y, qVals, minVal, maxVal, valStrs, bestActions, isCurrent):
 
 
 def getColor(val, minVal, max):
-    r, g = 0.0, 0.0
-    if val < 0 and minVal < 0:
-        r = val * 0.65 / minVal
+    r, g, b = 0.0, 0.0, 0.0
+    '''if val < 0 and minVal < 0:
+        r = val / minVal
     if val > 0 and max > 0:
-        g = val * 0.65 / max
-    return formatColor(r,g,0.0)
+        g = val / max
+    else:
+        r=1
+        g=1
+        b=1'''
+    
+    dif = max - minVal
+    if dif < 0.00001:
+        print("not big enough difference between ", minVal, "and", max, ".")
+        
+        g = 0
+        b = 0
+        r = 0
+    else:
+        normalisedValue = (val - minVal)/dif
+        if normalisedValue <= 0.333:
+            r = normalisedValue
+        elif 0.333 < normalisedValue <= 0.666:
+            g = normalisedValue
+        else:
+            b = normalisedValue
+    '''if normalisedValue < 0.25:
+        r = 1. * normalisedValue
+    elif 0.25 <= normalisedValue < 0.5:
+        g = 1. * normalisedValue
+        r = 1. * normalisedValue
+        b = 0.0
+    elif 0.5 <= normalisedValue < 0.75:
+        g = 1. * normalisedValue
+    elif 0.75 <= normalisedValue <=1:
+        b = 1. * normalisedValue
+    else:
+        print("nooooooo")
+        g=1
+        b=1
+        r=1
+    '''
+    return formatColor(r,g,b)
 
 
 def square(pos, size, color, filled, width):

@@ -54,7 +54,7 @@ class Gridworld(mdp.MarkovDecisionProcess):
         state under the special action "done".
         """
         if state == self.grid.terminalState:
-            return ()
+            return ('exit',)
         x,y = state
         if type(self.grid[x][y]) == int:
             return ('exit',)
@@ -119,7 +119,8 @@ class Gridworld(mdp.MarkovDecisionProcess):
             raise "Illegal action!"
 
         if self.isTerminal(state):
-            return []
+            termState = self.grid.terminalState
+            return [(termState, 1.0)]
 
         x, y = state
 
@@ -140,24 +141,24 @@ class Gridworld(mdp.MarkovDecisionProcess):
         
         # now we make another move upwards
         
-        if x==3 or x==4 or x==8: # add 1 to all y values
-            northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
-            westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
-            southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
-            eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
+        #if x==3 or x==4 or x==8: # add 1 to all y values
+        #    northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
+        #    westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
+        #    southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
+        #    eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
         
         # now if we're in x==6, 7 or 8, we wanna go one even higher if we can
-        if x==5 or x==6 or x==7:
+        #if x==5 or x==6 or x==7:
             # first just move one higher
-            northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
-            westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
-            southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
-            eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
+        #    northState = (self.__isAllowed(y+1+1,x) and (x,y+1+1)) or northState
+        #    westState = (self.__isAllowed(y+1,x-1) and (x-1,y+1)) or westState
+        #    southState = (self.__isAllowed(y+1-1,x) and (x,y-1+1)) or southState
+        #    eastState = (self.__isAllowed(y+1,x+1) and (x+1,y+1)) or eastState
             # now we try move another block up
-            northState = (self.__isAllowed(y+1+2,x) and (x,y+1+2)) or northState
-            westState = (self.__isAllowed(y+2,x-1) and (x-1,y+2)) or westState
-            southState = (self.__isAllowed(y+2-1,x) and (x,y-1+2)) or southState
-            eastState = (self.__isAllowed(y+2,x+1) and (x+1,y+2)) or eastState
+        #    northState = (self.__isAllowed(y+1+2,x) and (x,y+1+2)) or northState
+        #    westState = (self.__isAllowed(y+2,x-1) and (x-1,y+2)) or westState
+        #    southState = (self.__isAllowed(y+2-1,x) and (x,y-1+2)) or southState
+        #    eastState = (self.__isAllowed(y+2,x+1) and (x+1,y+2)) or eastState
             
         if action == 'north' or action == 'south':
             if action == 'north':
@@ -228,6 +229,7 @@ class GridworldEnvironment(environment.Environment):
             if sum > 1.0:
                 raise 'Total transition probability more than one; sample failure.'
             if rand < sum:
+                print("rerereeerere")
                 reward = self.gridWorld.getReward(state, action, nextState)
                 return (nextState, reward)
         raise 'Total transition probability less than one; sample failure.'
@@ -336,7 +338,7 @@ def getWindyGrid():
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
-            [' ','S',' ',' ',' ',' ',-1.,' ',' ',' '],
+            [' ','S',' ',' ',' ',' ',+1.,' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' '],
             [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']]
@@ -359,7 +361,7 @@ def getUserAction(state, actionFunction):
         if 'q' in keys: sys.exit(0)
         if action == None: continue
         break
-    actions = actionFunction(state)
+    actions = actionFunction(state) # the list of available actions. Empty in case of terminal state.
     if action not in actions:
         action = actions[0]
     return action
@@ -392,13 +394,18 @@ def runEpisode(agent, environment, discount, decision, display, message, pause, 
 
         # EXECUTE ACTION
         nextState, reward = environment.doAction(action)
-        message("Started in state: "+str(state)+
-                "\nTook action: "+str(action)+
-                "\nEnded in state: "+str(nextState)+
-                "\nGot reward: "+str(reward)+"\n")
+        if nextState == 'TERMINAL_STATE':
+            # dont do the thing below. do something better.
+            nextAction = 'exit' # just say the action is SOMETHING to get python to sthu
+        else:
+            nextAction = decision(nextState)
+        #message("Started in state: "+str(state)+
+        #        "\nTook action: "+str(action)+
+        #        "\nEnded in state: "+str(nextState)+
+        #        "\nGot reward: "+str(reward)+"\n")
         # UPDATE LEARNER
         if 'observeTransition' in dir(agent):
-            agent.observeTransition(state, action, nextState, reward)
+            agent.observeTransition(state, action, nextState, nextAction, reward)
 
         returns += reward * totalDiscount
         totalDiscount *= discount
@@ -412,7 +419,7 @@ def parseOptions():
                          type='float',dest='discount',default=1,
                          help='Discount on future (default %default)')
     optParser.add_option('-r', '--livingReward',action='store',
-                         type='float',dest='livingReward',default=-1.0,
+                         type='float',dest='livingReward',default=0.,
                          metavar="R", help='Reward for living for a time step (default %default)')
     optParser.add_option('-n', '--noise',action='store',
                          type='float',dest='noise',default=0.0,
@@ -422,13 +429,13 @@ def parseOptions():
                          type='float',dest='epsilon',default=0.3,
                          metavar="E", help='Chance of taking a random action in q-learning (default %default)')
     optParser.add_option('-l', '--learningRate',action='store',
-                         type='float',dest='learningRate',default=0.25,
+                         type='float',dest='learningRate',default=0.5,
                          metavar="P", help='TD learning rate (default %default)' ) # perhaps randomise learning rate
     optParser.add_option('-i', '--iterations',action='store',
                          type='int',dest='iters',default=10,
                          metavar="K", help='Number of rounds of value iteration (default %default)')
     optParser.add_option('-k', '--episodes',action='store',
-                         type='int',dest='episodes',default=1,
+                         type='int',dest='episodes',default=2,
                          metavar="K", help='Number of epsiodes of the MDP to run (default %default)')
     optParser.add_option('-g', '--grid',action='store',
                          metavar="G", type='string',dest='grid',default="WindyGrid",########################
@@ -436,8 +443,8 @@ def parseOptions():
     optParser.add_option('-w', '--windowSize', metavar="X", type='int',dest='gridSize',default=100,
                          help='Request a window width of X pixels *per grid cell* (default %default)')
     optParser.add_option('-a', '--agent',action='store', metavar="A",
-                         type='string',dest='agent',default="random",
-                         help='Agent type (options are \'random\', \'value\' and \'q\', default %default)')
+                         type='string',dest='agent',default="q",
+                         help='Agent type (options are \'random\', \'value\', \'SARSA\', and \'q\', default %default)')
     optParser.add_option('-t', '--text',action='store_true',
                          dest='textDisplay',default=False,
                          help='Use text-only ASCII display')
@@ -511,7 +518,7 @@ if __name__ == '__main__':
     # GET THE AGENT
     ###########################
 
-    import valueIterationAgents, qlearningAgents
+    import valueIterationAgents, qlearningAgents, SARSALearningAgents
     a = None
     if opts.agent == 'value':
         a = valueIterationAgents.ValueIterationAgent(mdp, opts.discount, opts.iters)
@@ -525,6 +532,16 @@ if __name__ == '__main__':
                       'epsilon': opts.epsilon,
                       'actionFn': actionFn}
         a = qlearningAgents.QLearningAgent(**qLearnOpts)
+    elif opts.agent == 'SARSA':
+        #env.getPossibleActions, opts.discount, opts.learningRate, opts.epsilon
+        #simulationFn = lambda agent, state: simulation.GridworldSimulation(agent,state,mdp)
+        gridWorldEnv = GridworldEnvironment(mdp)
+        actionFn = lambda state: mdp.getPossibleActions(state)
+        qLearnOpts = {'gamma': opts.discount,
+                      'alpha': opts.learningRate,
+                      'epsilon': opts.epsilon,
+                      'actionFn': actionFn}
+        a = SARSALearningAgents.SARSALearningAgent(**qLearnOpts)
     elif opts.agent == 'random':
         # # No reason to use the random agent without episodes
         if opts.episodes == 0:
@@ -576,6 +593,7 @@ if __name__ == '__main__':
             if opts.agent == 'random': displayCallback = lambda state: display.displayValues(a, state, "CURRENT VALUES")
             if opts.agent == 'value': displayCallback = lambda state: display.displayValues(a, state, "CURRENT VALUES")
             if opts.agent == 'q': displayCallback = lambda state: display.displayQValues(a, state, "CURRENT Q-VALUES")
+            if opts.agent == 'SARSA': displayCallback = lambda state: display.displayQValues(a, state, "CURRENT Q-VALUES")
 
     messageCallback = lambda x: printString(x)
     if opts.quiet:
@@ -607,7 +625,7 @@ if __name__ == '__main__':
         print()
 
     # DISPLAY POST-LEARNING VALUES / Q-VALUES
-    if opts.agent == 'q' and not opts.manual:
+    if (opts.agent == 'q' or opts.agent == 'SARSA') and not opts.manual:
         try:
             display.displayQValues(a, message = "Q-VALUES AFTER "+str(opts.episodes)+" EPISODES")
             display.pause()
